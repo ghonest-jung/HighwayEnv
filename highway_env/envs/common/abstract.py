@@ -31,25 +31,52 @@ class AbstractEnv(gym.Env):
     environment implementations.
     """
 
+    """
+    [read] ObservationType has several types, like GrayscaleObservation and TimeToCollisionObservation, among others.    
+    """
     observation_type: ObservationType
+    
+    """
+    [read] ActionType has 4 types (ContinuousAction, DiscreateAction, DiscreateMetaAction, MultiAgentAction)
+    """
     action_type: ActionType
+
+    """
+    [read] record_video_wrapper is private variable that can be None 
+    """
     _record_video_wrapper: RecordVideo | None
+
+    """
+    [read] render_mode must be either "human", "rgb_array", or None
+    """
     metadata = {
         "render_modes": ["human", "rgb_array"],
     }
 
+    """
+    [read] perception_distance is probably a key variable in the state
+    """
     PERCEPTION_DISTANCE = 5.0 * Vehicle.MAX_SPEED
     """The maximum distance of any vehicle present in the observation [m]"""
 
     def __init__(self, config: dict = None, render_mode: str | None = None) -> None:
         super().__init__()
 
+        """
+        [read] self.config is initialized with the default option and then updated with the value from the parameter.
+        """
         # Configuration
         self.config = self.default_config()
         self.configure(config)
 
         # Scene
+        """
+        [read] road is an object, so it may contain a lot of information.
+        """
         self.road = None
+        """
+        [read] controlled_vehicles is a list, not single variable.
+        """
         self.controlled_vehicles = []
 
         # Spaces
@@ -123,6 +150,11 @@ class AbstractEnv(gym.Env):
     def define_spaces(self) -> None:
         """
         Set the types and spaces of observation and action from config.
+        """
+
+        """
+        [read] Abstract factory pattern is used for observation and action.
+        if the type is incorrect, it raises ValueError.
         """
         self.observation_type = observation_factory(self, self.config["observation"])
         self.action_type = action_factory(self, self.config["action"])
