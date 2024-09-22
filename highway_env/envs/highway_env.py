@@ -52,6 +52,9 @@ class HighwayEnv(AbstractEnv):
         return config
 
     def _reset(self) -> None:
+        """
+        [read] After initializing the road, initialize vehicles
+        """
         self._create_road()
         self._create_vehicles()
 
