@@ -299,7 +299,12 @@ class RoadNetwork:
         net: RoadNetwork | None = None,
     ) -> RoadNetwork:
         net = net or RoadNetwork()
+
+        """
+        [read] The name of start is "0" and name of end is "1".
+        """
         nodes_str = nodes_str or ("0", "1")
+        
         for lane in range(lanes):
             origin = np.array([start, lane * StraightLane.DEFAULT_WIDTH])
             end = np.array([start + length, lane * StraightLane.DEFAULT_WIDTH])

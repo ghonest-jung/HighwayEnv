@@ -80,8 +80,15 @@ class HighwayEnv(AbstractEnv):
             self.config["vehicles_count"], num_bins=self.config["controlled_vehicles"]
         )
 
+        """
+        [read] Initialize controlled_vehicles(action) and other vehicles.
+        """
         self.controlled_vehicles = []
         for others in other_per_controlled:
+
+            """
+            [read] Why is vehicle created twice? 
+            """
             vehicle = Vehicle.create_random(
                 self.road,
                 speed=25,
@@ -91,6 +98,10 @@ class HighwayEnv(AbstractEnv):
             vehicle = self.action_type.vehicle_class(
                 self.road, vehicle.position, vehicle.heading, vehicle.speed
             )
+
+            """
+            [read] The Controlled_vehicles are appended to the env and the road 
+            """
             self.controlled_vehicles.append(vehicle)
             self.road.vehicles.append(vehicle)
 
@@ -99,6 +110,9 @@ class HighwayEnv(AbstractEnv):
                     self.road, spacing=1 / self.config["vehicles_density"]
                 )
                 vehicle.randomize_behavior()
+                """
+                [read] Other vehicles are appended only to the road 
+                """
                 self.road.vehicles.append(vehicle)
 
     def _reward(self, action: Action) -> float:
@@ -108,6 +122,11 @@ class HighwayEnv(AbstractEnv):
         :return: the corresponding reward
         """
         rewards = self._rewards(action)
+
+        """
+        [read] The reward is sum of specific rewards multipled by their respective weights.
+        If the weight is not defined, that reward is 0.
+        """
         reward = sum(
             self.config.get(name, 0) * reward for name, reward in rewards.items()
         )
@@ -120,21 +139,36 @@ class HighwayEnv(AbstractEnv):
                 ],
                 [0, 1],
             )
+
+        """
+        [read] If the vehicle is outsided the road, the reward is set to 0.
+        """
         reward *= rewards["on_road_reward"]
         return reward
 
     def _rewards(self, action: Action) -> dict[str, float]:
+        """
+        [read] What do 'neighbours' and 'lane' means?
+        """
         neighbours = self.road.network.all_side_lanes(self.vehicle.lane_index)
         lane = (
             self.vehicle.target_lane_index[2]
             if isinstance(self.vehicle, ControlledVehicle)
             else self.vehicle.lane_index[2]
         )
+
+        """
+        [read] The issues 268 is interesting. The RL-agent discovers a policy that humans wouldn't event think of. 
+        """
         # Use forward speed rather than speed, see https://github.com/eleurent/highway-env/issues/268
         forward_speed = self.vehicle.speed * np.cos(self.vehicle.heading)
         scaled_speed = utils.lmap(
             forward_speed, self.config["reward_speed_range"], [0, 1]
         )
+
+        """
+        [read] Defined reward.
+        """
         return {
             "collision_reward": float(self.vehicle.crashed),
             "right_lane_reward": lane / max(len(neighbours) - 1, 1),
