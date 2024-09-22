@@ -136,11 +136,19 @@ class ContinuousAction(ActionType):
     def get_action(self, action: np.ndarray):
         if self.clip:
             action = np.clip(action, -1, 1)
+        """
+        [read] Why is the controlled vehicle speed range updated every time get_action is called?
+        """
         if self.speed_range:
             (
                 self.controlled_vehicle.MIN_SPEED,
                 self.controlled_vehicle.MAX_SPEED,
             ) = self.speed_range
+
+        """
+        [read] If both longitudinal and lateral are false, raise an error. 
+        However, this is prevented in the __init__ method.
+        """
         if self.longitudinal and self.lateral:
             return {
                 "acceleration": utils.lmap(action[0], [-1, 1], self.acceleration_range),
@@ -158,10 +166,18 @@ class ContinuousAction(ActionType):
             }
 
     def act(self, action: np.ndarray) -> None:
+        """
+        [read] Action just calls controlled_vehicle.act
+        """
         self.controlled_vehicle.act(self.get_action(action))
+        """
+        [read] Why is last_action needed?
+        """
         self.last_action = action
 
-
+"""
+[read] DiscreteAction inherits from ContinuousAction.
+"""
 class DiscreteAction(ContinuousAction):
     def __init__(
         self,
@@ -190,6 +206,9 @@ class DiscreteAction(ContinuousAction):
         return spaces.Discrete(self.actions_per_axis**self.size)
 
     def act(self, action: int) -> None:
+        """
+        [read] The range of actions should be within actions_per_axis.
+        """
         cont_space = super().space()
         axes = np.linspace(cont_space.low, cont_space.high, self.actions_per_axis).T
         all_actions = list(itertools.product(*axes))

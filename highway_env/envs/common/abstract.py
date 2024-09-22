@@ -140,6 +140,9 @@ class AbstractEnv(gym.Env):
             self.config.update(config)
 
     def update_metadata(self, video_real_time_ratio=2):
+        """
+        [read] Why is policy_frequency used when if _record_video_wrapper??
+        """
         frames_freq = (
             self.config["simulation_frequency"]
             if self._record_video_wrapper
@@ -234,11 +237,19 @@ class AbstractEnv(gym.Env):
         if options and "config" in options:
             self.configure(options["config"])
         self.update_metadata()
+        
+        """
+        [read] Why is define_spaces called twice??
+        """
         self.define_spaces()  # First, to set the controlled vehicle class depending on action space
         self.time = self.steps = 0
         self.done = False
         self._reset()
         self.define_spaces()  # Second, to link the obs and actions to the vehicles once the scene is created
+        
+        """
+        [read] reset function returns info by action sampled
+        """
         obs = self.observation_type.observe()
         info = self._info(obs, action=self.action_space.sample())
         if self.render_mode == "human":
@@ -268,9 +279,15 @@ class AbstractEnv(gym.Env):
                 "The road and vehicle must be initialized in the environment implementation"
             )
 
+        """
+        [read] Within a single unit of time, actions are taken according to the number of policy_frequency.
+        """
         self.time += 1 / self.config["policy_frequency"]
-        self._simulate(action)
 
+        """
+        [read] simulate -> obs -> reward -> info 
+        """
+        self._simulate(action)
         obs = self.observation_type.observe()
         reward = self._reward(action)
         terminated = self._is_terminated()
@@ -286,8 +303,16 @@ class AbstractEnv(gym.Env):
         frames = int(
             self.config["simulation_frequency"] // self.config["policy_frequency"]
         )
+
+        """
+        [read] Within a single unit time, frame is updated simulation_frequency times and policy(_simulate, step) is
+        updated policy_frequency times.
+        """
         for frame in range(frames):
             # Forward action to the vehicle
+            """
+            [read] action is updated once
+            """
             if (
                 action is not None
                 and not self.config["manual_control"]
@@ -300,8 +325,15 @@ class AbstractEnv(gym.Env):
             ):
                 self.action_type.act(action)
 
+            """
+            [read] The Road act frames times
+            """
             self.road.act()
             self.road.step(1 / self.config["simulation_frequency"])
+
+            """
+            [read] steps means number of frames
+            """
             self.steps += 1
 
             # Automatically render intermediate simulation steps if a viewer has been launched
