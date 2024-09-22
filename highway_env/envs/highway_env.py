@@ -60,6 +60,11 @@ class HighwayEnv(AbstractEnv):
 
     def _create_road(self) -> None:
         """Create a road composed of straight adjacent lanes."""
+
+        """
+        [read] The road is initailized without vehicle info.
+        When initializing the vehicle class, that info is appended 
+        """
         self.road = Road(
             network=RoadNetwork.straight_road_network(
                 self.config["lanes_count"], speed_limit=30
